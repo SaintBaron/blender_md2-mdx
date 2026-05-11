@@ -178,7 +178,7 @@ bl_info = {
     "name": "Kingpin Models (md2, mdx)",
     "description": "Import/export Kingpin compatible model (md2/mdx)",
     "author": "Update by HypoV8. See _init_.py for contributors",
-    "version": (1, 2, 6),
+    "version": (1, 2, 7),
     "blender": (2, 80, 0),
     "location": "File > Import/Export > Kingpin Models",
     "warning": "",  # used for warning icon and text in addons panel
