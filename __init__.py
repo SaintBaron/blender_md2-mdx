@@ -266,12 +266,12 @@ class KP_Preferences(AddonPreferences):
 # blender UI menu.
 # file > export
 def menu_func_export(self, context):
-    self.layout.operator(KINGPIN_Export_Dialog.bl_idname, text="Kingpin Models (md2, mdx)")
+    self.layout.operator(KINGPIN_Export_Dialog.bl_idname, text="Quake 2 Models (md2, mdx)")
 
 
 # file > import
 def menu_func_import(self, context):
-    self.layout.operator(KINGPIN_Import_Dialog.bl_idname, text="Kingpin Models (md2, mdx)")
+    self.layout.operator(KINGPIN_Import_Dialog.bl_idname, text="Quake 2 Models (md2, mdx)")
 
 
 classes = (
