@@ -32,27 +32,46 @@ from . common_kp import (
     set_mode_get_obj,
     is_selected_mesh,
     get_mesh_objects,
+    fcurves_iter,
     IDX_XYZ_V
 )
 
 @persistent
-def post_frame_change():
+def post_frame_change(*args):
     ''' bpy.ops.object.mode_set(mode=mode) '''
+    # Persistent handlers in 2.80+ receive a scene (and optionally depsgraph)
+    # argument; ignore them and operate on the current context.
     if bpy.context.mode != 'OBJECT':
-        mode = bpy.context.object.mode
-        bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.context.scene.objects.active = bpy.context.scene.objects.active
-        bpy.ops.object.mode_set(mode=mode)
-        print("post_frame_change1")
+        try:
+            mode = bpy.context.object.mode
+            bpy.ops.object.mode_set(mode='OBJECT')
+            # In 2.80+, the active object lives on view_layer.objects.active,
+            # not scene.objects.active. The "set to self" trick was a 2.79
+            # idiom to force a refresh; on 2.80+ no-op is fine here.
+            if hasattr(bpy.context, "view_layer"):
+                vl = bpy.context.view_layer
+                vl.objects.active = vl.objects.active
+            else:
+                bpy.context.scene.objects.active = bpy.context.scene.objects.active
+            bpy.ops.object.mode_set(mode=mode)
+        except Exception as e:
+            print("post_frame_change error: %s" % e)
 
 
 @persistent
-def pre_frame_change():
+def pre_frame_change(*args):
     ''' bpy.context.active_object.update_from_editmode() '''
     if bpy.context.mode != 'OBJECT':
-        bpy.context.active_object.update_from_editmode()
-        bpy.context.scene.objects.active = bpy.context.scene.objects.active
-        print("pre_frame_change1")
+        try:
+            if bpy.context.active_object is not None:
+                bpy.context.active_object.update_from_editmode()
+            if hasattr(bpy.context, "view_layer"):
+                vl = bpy.context.view_layer
+                vl.objects.active = vl.objects.active
+            else:
+                bpy.context.scene.objects.active = bpy.context.scene.objects.active
+        except Exception as e:
+            print("pre_frame_change error: %s" % e)
 
 
 # Property Definitions
@@ -513,7 +532,7 @@ def insertKey_kp(context, allVerts=False):
             if animProp_KP.key_keytype_in != 'NONE':
                 anim = obj.data.animation_data
                 if anim is not None and anim.action is not None:
-                    for fcu in anim.action.fcurves:
+                    for fcu in fcurves_iter(anim.action):
                         for v_i, kf in enumerate(fcu.keyframe_points):
                             if selVerts[v_i] is True and kf.co[0] > frame_min and kf.co[0] < frame_max:
                                 kf.interpolation = animProp_KP.key_keytype_in
@@ -530,7 +549,7 @@ def insertKey_kp(context, allVerts=False):
             if animProp_KP.key_keytype_in != 'NONE':
                 anim = obj.data.shape_keys.animation_data
                 if anim is not None and anim.action is not None:
-                    for fcu in anim.action.fcurves:
+                    for fcu in fcurves_iter(anim.action):
                         for v_i, kf in enumerate(fcu.keyframe_points):
                             if (kf.co[0] > frame_min and kf.co[0] < frame_max):
                                 kf.interpolation = animProp_KP.key_keytype_in
