@@ -27,7 +27,9 @@ from . common_kp import (
     set_ui_panel_string,
     set_select_state,
     set_obj_group,
-    update_matrices
+    update_matrices,
+    fcurves_iter,
+    fcurves_get,
 )
 
 
@@ -434,7 +436,7 @@ class KINGPIN_UI_BUTTON_GO(Operator):
             # key frame XYZ legs (no parent) 'tag_'
             def set_key_tag_fn(targetObj_f, time_kp_f, time_q3_f, fCurveArray, fcur_idx_f):
                 anim = targetObj_f.animation_data
-                for i, fcu in enumerate(anim.action.fcurves):
+                for i, fcu in enumerate(fcurves_iter(anim.action)):
                     fcu_pt = fcu.keyframe_points
                     fcu_pt.add(1)
                     fcu_pt_id = fcu_pt[fcur_idx_f]
@@ -451,7 +453,7 @@ class KINGPIN_UI_BUTTON_GO(Operator):
             def evalTime_pos_fn(obj, time):
                 anim = obj.animation_data
                 pos = [0, 0, 0]
-                for i, fcu in enumerate(anim.action.fcurves):
+                for i, fcu in enumerate(fcurves_iter(anim.action)):
                     pos[i] = fcu.evaluate(time)
                     if i == 2:
                         break
@@ -584,7 +586,7 @@ class KINGPIN_UI_BUTTON_GO(Operator):
                     anim = targetObj.animation_data
                     if anim is not None and anim.action is not None:
                         anim.action = anim.action.copy()
-                        for fcu in anim.action.fcurves:
+                        for fcu in fcurves_iter(anim.action):
                             tmp = []
                             # store q3 keyframes
                             for v_i, kf in enumerate(fcu.keyframe_points):
@@ -611,7 +613,7 @@ class KINGPIN_UI_BUTTON_GO(Operator):
                     if targetObj.data.shape_keys:
                         anim = targetObj.data.shape_keys.animation_data
                         if anim is not None and anim.action is not None:
-                            for fcu in anim.action.fcurves:
+                            for fcu in fcurves_iter(anim.action):
                                 for i in reversed(range(0, len(fcu.keyframe_points))):
                                     fcu.keyframe_points.remove(fcu.keyframe_points[i], fast=True)
                                 fcu.update()
@@ -737,7 +739,7 @@ class KINGPIN_UI_BUTTON_GO(Operator):
                                     set_key_mesh_fn(targetObj, time_kp_end, time_q3)
                                 # update fcurve
                                 anim = targetObj.data.shape_keys.animation_data
-                                for fcu in anim.action.fcurves:
+                                for fcu in fcurves_iter(anim.action):
                                     for pt in fcu.keyframe_points:
                                         pt.interpolation = 'LINEAR'
                                     fcu.update()
