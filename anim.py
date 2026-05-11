@@ -268,13 +268,13 @@ def delete_all_anims(self, context):
 
 
 # GUI (Panel)
-class VIEW3D_PT_animall_KP(Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = set_ui_panel_string()
-    bl_category = 'Kingpin'
-    bl_label = 'KEY FRAMES'
+class KINGPIN_PT_keyframes(Panel):
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'scene'
+    bl_parent_id = 'KINGPIN_PT_main'
+    bl_label = 'Vertex keyframes'
     bl_options = {'DEFAULT_CLOSED'}
-    # bl_options = {'HEADER_LAYOUT_EXPAND'}
 
     '''@classmethod
     def poll(self, context):
@@ -644,7 +644,7 @@ classes = (
     KP_UI_BTN_ANIM_FRAME_NEXT,
     KP_UI_BTN_ANIM_FRAME_PREV,
     KP_UI_BTN_ANIM_FRAME_UPDATE,
-    VIEW3D_PT_animall_KP,
+    KINGPIN_PT_keyframes,
 )
 
 

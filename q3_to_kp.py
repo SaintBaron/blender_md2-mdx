@@ -188,11 +188,12 @@ class KINGPIN_Q3toKP_props(PropertyGroup):
 
 
 # GUI
-class VIEW3D_PT_Q3_to_KP_GUI(Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = set_ui_panel_string()
-    bl_category = 'Kingpin'
-    bl_label = 'QUAKE3 to KP'
+class KINGPIN_PT_q3_to_kp(Panel):
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'scene'
+    bl_parent_id = 'KINGPIN_PT_main'
+    bl_label = 'Quake 3 model converter'
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -1185,7 +1186,7 @@ classes = (
     KINGPIN_UI_BUTTON_CFG_File,
     KINGPIN_UI_BUTTON_GO,
     KINGPIN_UI_BUTTON_ABOUT,
-    VIEW3D_PT_Q3_to_KP_GUI
+    KINGPIN_PT_q3_to_kp,
 )
 
 

@@ -102,7 +102,10 @@ v1.2.6
 - addon preference. export file name as mesh name. with md2/mdx choice
 - added import/export button to tool menu
 
-
+v1.3.0
+- Updated for the latest version of Blender
+- Added support for HROT .md2 models
+- Moved configurations/tools to the scene panel
 
 notes
 =====
@@ -175,12 +178,12 @@ todo:
 
 
 bl_info = {
-    "name": "Kingpin Models (md2, mdx)",
-    "description": "Import/export Kingpin compatible model (md2/mdx)",
+    "name": ".MD2/.MDX Model Tools",
+    "description": "Import/export Kingpin/Quake/HROT compatible model files (md2/mdx), with modeling, animation, and Quake 3 conversion helpers",
     "author": "Update by HypoV8. See _init_.py for contributors",
-    "version": (1, 2, 7),
+    "version": (1, 3, 0),
     "blender": (2, 80, 0),
-    "location": "File > Import/Export > Kingpin Models",
+    "location": "Properties > Scene > .MD2/.MDX Model Tools",
     "warning": "",  # used for warning icon and text in addons panel
     "tracker_url": "https://github.com/hypov8/blender_kingpin_models",
     "wiki_url": "https://kingpin.info/",
@@ -253,24 +256,11 @@ class KP_Preferences(AddonPreferences):
         layout = self.layout
         box = layout.box()
         row = box.row()
-        row.label(text='Export Dialog options')
+        row.label(text='Export options')
         row = box.row()
         row.prop(self, "pref_kp_filename")
         if self.pref_kp_filename:
             row.prop(self, "pref_kp_file_ext")
-        #import options
-        box = layout.box()
-        row = box.row()
-        row.label(text='Import Tool Panel')
-        row = box.row()
-        row.enabled = False
-        row.prop(self, "pref_kp_import_button_use_dialog")
-        # export options
-        box = layout.box()
-        row = box.row()
-        row.label(text='Export Tool Panel')
-        row = box.row()
-        row.prop(self, "pref_kp_export_button_use_dialog")
 
 
 # blender UI menu.
@@ -321,8 +311,10 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
-    anim.register()
+    # tools.register() must come first — it defines KINGPIN_PT_main,
+    # the parent panel that anim.py and q3_to_kp.py attach sub-panels to.
     tools.register()
+    anim.register()
     q3_to_kp.register()
     # menu
     get_menu_export().append(menu_func_export)

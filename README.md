@@ -1,111 +1,164 @@
-# Quake 2 and Kingpin .md2 .mdx import/export add-on for Blender
+# .MD2/.MDX Model Tools for Blender
 
-Tested to work in blender 2.79, 2.80, 2.92, 3.2.1
+A Blender addon for importing and exporting **Quake II (.md2)** and **Kingpin (.mdx)** models, with extra tooling for working with vertex-animated meshes.
 
-Skins can be set using image textures or materials. if it is longer than 63 characters it is truncated.
+Tested on Blender 5.1. Should work on 4.4+ where the slotted-actions API is available; older versions (2.80–4.3) take a legacy code path that is still supported.
 
-Import mesh animation as vertex or shapekey
+---
 
-Frame names can be read/set for timeline
+## Installing
 
-## Using animation driver
--    if you have a complete mesh with animated data, you cant delets faces/vertex. so use this to re-animate
--    first set scene frame. preferabl frame 0
--    Duplicate mesh(the one that has the full animation)
--    on the duplicated mesh, remove all animation data (use button Clear Anim)
--    in edit mode, delete parts of the mesh you dont want.
--    in kp tools, select 'target'(the original mesh you cloned)
--    in kp tools, press 'Animate mesh'
--    if model was aligned properly, the closest vertex from target will drive vertex in the selected object/s
--    scrub through timeline to confirm animation. remove any 'modifiers' that may effect animation
+1. Download or clone this repository.
+2. Place the `kingpin/` folder inside your Blender addons directory:
+   - **Linux:** `~/.config/blender/<version>/scripts/addons/kingpin/`
+   - **Windows:** `%APPDATA%\Blender Foundation\Blender\<version>\scripts\addons\kingpin\`
+   - **macOS:** `~/Library/Application Support/Blender/<version>/scripts/addons/`
+3. In Blender, open `Edit > Preferences > Add-ons`, search for **MD2**, and tick the checkbox to enable.
 
-## Quake 3 .md3 conversion to Kingpin
--    Using the 'Quake 3 Model (.md3)-hy-' Import script.
--    Import lower.md3, upper.md3, head.md3 and shotgun.md3.
--    Option: Select the Leg Idle animations type(static/animated)
--    Option: Change the leg rotation angles(for running sidways)
--    Option: Change Crouch Death anim to use stand death anim 1/2/3.
--    Option: Change Scale to match a kingpin player model size.
--    Press the 'Animation.cfg' folder Button.
--    Select the .cfg file matching the imported Q3 models.
--    Hide any non Q3 scene objects.
--    Press the 'Convert to Kingpin' Button.
--    You can now export the head/body/legs models to Kingpin.
--    Note:
--    Animation.cfg may need tweeking to get the animations correct.
--    Death animations order are used based on time, to suit KP.-
+If you used Steam to install Blender, the addon directory may live inside Steam's Proton prefix — check `bpy.utils.user_resource('SCRIPTS', path="addons")` in Blender's Python console to find the right path.
 
+---
 
-## Thanks to:
--   DarkRain
--   Bob Holcomb. for MD2_NORMALS taken from his exporter.
--   David Henry. for the documentation about the MD2 file format.
--   Bob Holcomb
--   Sebastian Lieberknecht
--   Dao Nguyen
--   Bernd Meyer
--   Damien Thebault
--   Erwan Mathieu
--   Takehiko Nawata
--   Daniel Salazar. AnimAll
--   Patrick W. Crawford. theduckcow.com 2.7/2.8 support
+## Where things live
 
-## hypov8 plugin update log
-========================
-v1.1.1 (blender 2.79)
-- fix texture bug
-- added importing of GL commands. For enhanced uv precision
-- added skin search path for texture not im model folder
-- added multi part player model bbox fix. All parts must be visible in scene
-- fixed texture issue in glCommands. not checking for uv match, just vertex id
+- **File > Import > Kingpin Models (md2, mdx)** — import a model.
+- **File > Export > Kingpin Models (md2, mdx)** — export the selected mesh(es).
+- **Properties editor → Scene tab → .MD2/.MDX Model Tools** — the modeling, animation, and conversion helpers (see below).
 
-v1.2.0 (blender 2.80) jan 2020
-- updated to work with new blender
-- merged md2/mdx into 1 script
-- loading/saving allows selection of both file types
-- option for imported models to set timeline range if animated
-- multi model selection support for exports
-- hitbox will be created for each selected object
+---
 
-v1.2.1 (blender 2.80) nov 2020
-- fixed a texture missing bug
-- fixed texture string formatting
-- export no longer fails if a skin was not found
-- fixed skin string issue being null
-- added matrix for non shape key exports
+## Importing a model
 
-v1.2.2 (blender 2.79+2.80) sep 2022
-- import using 1 shape key (using animall plugin method to set keys)
-- option to switch keyframe import modes ()
-- merge blender 2.7 into 1 script
-- 2.79. import textures using nodes
-- using blenders .obj addon as a base for mesh data
+`File > Import > Kingpin Models (md2, mdx)`.
 
-v1.2.3 (blender 2.79+2.80) oct 2022
-- added animation toolbar, based on animall plugin.
-    for editing shape keys and vertex animation
-- importing of multiple selected models added
-- added new shape key import method.(absolute mode)
+Useful options in the import dialog:
 
-v1.2.4
-- added quake3 to kingpin player model converter
-- added kingpin tool to toolbar: Build grid. used to align vertex,
-    for better exported model compression
-- import image will no longer duplicate existing images
-- added a mesh driver function. so animated meshes can be split into sections
+- **Use Existing Material** — if a material with the same name as the model's skin already exists in the scene, reuse it instead of making a duplicate.
+- **Store .pcx Internally** — Blender doesn't natively load `.pcx` textures, so the addon decodes them and packs them into the blend file. Disable if you'd rather skip pcx skins.
+- **Skip Mesh Cleanup** — by default Blender validates imported mesh data and may strip faces it considers invalid. Tick this to keep the raw geometry.
+- **Type** — how to bring in animation:
+  - *Vertex Keys* — per-vertex F-curves. Most flexible, slowest to import.
+  - *Shape Keys (absolute)* — one shape key per frame, driven by `eval_time`. Good middle ground.
+  - *Shape Keys (relative)* — one shape key per frame with value keyframes. Old behaviour.
+- **Import Frame Names** — turns frame name prefixes (e.g. `stand1`, `stand2`, `run1`…) into timeline markers.
 
-- v1.2.5
-- added high deff models. 2byte vertex, double vert/poly counts
-- updated animation tool to support collections at source
-- split up faces into 256 groups when building glcommands. speed boost but...
+Multi-select is supported: select multiple `.md2`/`.mdx` files in the dialog and they'll all import.
 
-v1.2.6
-- added 2 byte precision import/export (HD, no wobble)
-- added pcx support. pcx will be saved to .blend file
-- added mesh smooth tool. to try fix md2 compresion wobble. for HD export
-- fixed mesh grid to use proper context. compatable with older blender
-- removed unused libary and clean up
-- retarget animation now supports selecting collections as source
-- added custom vertex normal export option (use for players with seams)
-- addon preference. export file name as mesh name. with md2/mdx choice
-- added import/export butting to tool menu
+---
+
+## Exporting a model
+
+`File > Export > Kingpin Models (md2, mdx)`. Select the meshes you want to export first, then choose `.md2` or `.mdx` as the file extension.
+
+Notes worth knowing:
+
+- **Skin paths** are truncated to 63 characters (engine limit). If your texture is set up as a material with an image node, the addon will use the image path; otherwise the material name is used as the skin name.
+- **Frame names** come from timeline markers. The frame range exported is the scene's `frame_start` to `frame_end`.
+- **Hitbox** is generated automatically as a bounding box covering all selected meshes across all frames.
+- **Custom vertex normals** can be exported as well — useful for player models with seams that need consistent normals across parts (see "Custom vertex normals" below).
+- **HD precision (`.mdx5`)** uses 2 bytes per vertex coordinate instead of 1, eliminating compression wobble at the cost of file size.
+
+---
+
+## The Scene panel
+
+Under `Properties > Scene > .MD2/.MDX Model Tools` you'll find five collapsible sub-panels:
+
+### MD2 vertex grid
+
+MD2/MDX compresses vertex positions into bytes, so vertices snap to a coarse grid and animate with visible jitter ("wobble"). This tool builds a reference grid in the scene at the exact resolution the exporter will quantize to. Snap your vertices to grid points and the wobble disappears.
+
+Options: solid/wireframe display, floor-only mode, subdivision count.
+
+### Smooth animation wobble
+
+An alternative approach to the same problem: imports an existing vertex animation, runs a Gaussian smoothing pass over each vertex's position curve, writes the smoothed values back.
+
+Set a start/end frame range and tick **Loop** if the animation is cyclic (idle, run). Then press **Smooth**. Only meaningful on HD (`.mdx5`) models — standard MD2 precision will be re-quantized on export anyway.
+
+### Retarget animation
+
+Drive a static mesh from an existing animated source. Useful for:
+
+- Splitting an animated model into parts (head/body/legs) while keeping the original animation.
+- Re-applying animation to a re-topologized or cleaned-up mesh.
+
+Workflow:
+
+1. Set the scene to a bind frame where the source and target meshes are aligned (usually frame 0, T-pose).
+2. Duplicate the animated source, then on the duplicate: clear all animation, delete the geometry you don't want.
+3. In the panel, set **Source** to the original animated mesh.
+4. Set the start/end frame range.
+5. Press **Animate Mesh**. For each vertex on the target, the addon finds the nearest source vertex and copies its animation.
+6. Scrub the timeline to confirm. Remove any modifiers that might interfere.
+
+You can also point Source at a collection if the animation spans multiple objects.
+
+### Vertex keyframes
+
+Manual editing tools for vertex-animated meshes — based on the AnimAll addon's approach.
+
+Insert, delete, and clear keyframes for selected vertices (or all vertices). Switch interpolation type (linear, bezier, constant). Step through the timeline frame by frame. Works for both vertex-key animation and shape-key animation depending on what the active mesh uses.
+
+### Quake 3 model converter
+
+Convert a Quake 3 character (lower/upper/head + weapon) into Kingpin-compatible parts.
+
+1. Import the Q3 `.md3` files using a `.md3` importer (e.g. the "Quake 3 Model" addon).
+2. In this panel, set leg idle behaviour (static or animated), running rotation angles, crouch-death fallback, and a scale factor matching Kingpin player proportions.
+3. Press **Animation.cfg** and select the matching `.cfg` from the Q3 model.
+4. Hide any unrelated scene objects.
+5. Press **Convert to Kingpin**.
+
+Now you can export head/body/legs separately as `.md2` or `.mdx`. The `animation.cfg` often needs hand-tweaking to land the timings.
+
+---
+
+## Custom vertex normals (for seamed player models)
+
+When a model is split into parts (head/body/legs), the seam between parts has duplicate vertices with different normals, which looks like a visible crease in-game. The fix:
+
+1. Duplicate the model. Clear its animation. Merge all parts and weld the seam vertices.
+2. Retarget the animation onto this merged mesh (use the Retarget panel in collection mode).
+3. On the mesh you actually want to export, add a **Data Transfer** modifier.
+4. Source = the merged/welded mesh. Use "Face Corner Data → Custom Normals". Make sure the source object has Auto Smooth enabled.
+5. When exporting, tick **Custom vertex normals**.
+
+The seam parts will now share identical normals along the seam and shade as one smooth mesh.
+
+---
+
+## File format limits
+
+| Constant | MD2 | MDX | MDX5 (HD) |
+|---|---|---|---|
+| Max vertices | 2048 | 4096 | 4096 |
+| Max triangles | 4096 | 8192 | 8192 |
+| Max frames | 1024 | 1024 | 1024 |
+| Max skins | 32 | 32 | 32 |
+| Skin name length | 63 | 63 | 63 |
+| Vertex precision | 1 byte/axis | 1 byte/axis | 2 bytes/axis |
+
+---
+
+## Troubleshooting
+
+**Import fails with `struct.error: unpack requires a buffer of N bytes`** — the file is truncated, corrupt, or wasn't produced by a strictly-conformant exporter. Try opening it in another tool (MeshLab, the Autodesk FBX Converter) to confirm it's valid. If you can, re-export from there.
+
+**Textures show as solid colour** — the skin path inside the file points somewhere the addon can't find. The addon searches the model's folder, then walks up to `models/`, `players/`, or `textures/` parent directories. If your texture is elsewhere, copy it next to the model and re-import, or set the material's image manually after import.
+
+**`.pcx` skins don't appear** — make sure "Store .pcx Internally" was enabled on import. Otherwise Blender won't render the pcx and you'll need to convert it to PNG/TGA externally.
+
+**The Scene panel is missing** — make sure the addon is actually enabled (`Preferences > Add-ons`, search "MD2", tick the box). The panel lives in the **Properties editor → Scene tab**, not the 3D viewport sidebar.
+
+**Animation imports but plays at wrong speed** — Kingpin/Q2 models don't store a frame rate; the addon imports each frame as one scene frame. Adjust scene FPS to taste, or use timeline markers (which the addon imports from frame name prefixes) to find the loop points.
+
+---
+
+## Credits
+
+This addon is descended from the original Quake 2 MD2 import/export work, extended for Kingpin's MDX format by HypoV8. Contributors over the years:
+
+DarkRain · Bob Holcomb (MD2 normals, original exporter) · David Henry (MD2 format documentation) · Sebastian Lieberknecht · Dao Nguyen · Bernd Meyer · Damien Thebault · Erwan Mathieu · Takehiko Nawata · Daniel Salazar (AnimAll) · Patrick W. Crawford (2.7/2.8 support)
+
+Tracker: <https://github.com/hypov8/blender_kingpin_models>
