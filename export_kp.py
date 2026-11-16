@@ -146,6 +146,15 @@ class KINGPIN_Export_props(PropertyGroup):
             "Used to avoid wobble in static vertices but wastes resolution"),
         default=False
     )
+    ui_opt_skin_prefix = StringProperty(
+    name="Skin Path Prefix",
+    description=(
+        "Prepend this path to every skin name.\n"
+        "Example: 'models/flash/' turns 'flash.png' into 'models/flash/flash.png'.\n"
+        "Leave empty to disable."
+    ),
+    default=""
+    )
     # gui panel extra
     ui_opt_model_ext = EnumProperty(
         name="Format",
@@ -234,6 +243,8 @@ def draw_export(self, context):
 
     # skin chooser box
     layout.prop(ui_export_, "ui_opt_tex_name")  # testure source (dropdown)
+
+    layout.prop(ui_export_, "ui_opt_skin_prefix")
 
     # misc options box
     box = layout.box()
@@ -715,9 +726,11 @@ def setup_data_fn(self, context):
             tmpPath = os.path.normpath(tmpPath)
             tmpPath = tmpPath.replace('\\', '/')
             texname = ""
-            modelIdx = tmpPath.find("models" + os.sep)
-            plyerIdx = tmpPath.find("players" + os.sep)
-            textrIdx = tmpPath.find("textures" + os.sep)
+            # Path is normalized to forward slashes above — use '/' not os.sep,
+            # otherwise Windows users get the full absolute path as the skin name.
+            modelIdx = tmpPath.find("models/")
+            plyerIdx = tmpPath.find("players/")
+            textrIdx = tmpPath.find("textures/")
             if modelIdx >= 0:
                 texname = tmpPath[modelIdx:]
             elif plyerIdx >= 0:
@@ -730,7 +743,15 @@ def setup_data_fn(self, context):
 
         def appendSkins(skins, texname):
             if texname and len(texname) > 0:
-                if texname not in skins and len(skins) <= MD2_MAX_SKINS:
+                # Apply skin path prefix (e.g. "models/flash/").
+                # getattr with default for backward-compat if the property is missing.
+                prefix = getattr(self, 'ui_opt_skin_prefix', '') or ''
+                if prefix:
+                    p = prefix.replace('\\', '/').strip('/')
+                    if p and not texname.startswith(p + '/'):
+                        texname = p + '/' + texname
+                # Note: strict < instead of <= (fixes off-by-one that allowed 33 skins).
+                if texname not in skins and len(skins) < MD2_MAX_SKINS:
                     skins.append(texname)
 
         def updateWH(size, found, outW, outH):
@@ -1230,6 +1251,7 @@ def Export_MD2_fn(self, context, filepath):
     self.ui_opt_share_bbox = ui_export_.ui_opt_share_bbox
     self.ui_opt_use_hitbox = ui_export_.ui_opt_use_hitbox
     self.ui_opt_tex_name = ui_export_.ui_opt_tex_name
+    self.ui_opt_skin_prefix = ui_export_.ui_opt_skin_prefix
     self.ui_opt_fr_start = ui_export_.ui_opt_fr_start
     self.ui_opt_fr_end = ui_export_.ui_opt_fr_end
     self.ui_opt_apply_modify = True #ui_export_.ui_opt_apply_modify
